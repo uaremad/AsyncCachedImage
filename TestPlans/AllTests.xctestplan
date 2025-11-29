@@ -1,0 +1,23 @@
+{
+  "configurations" : [
+    {
+      "id" : "67F1A8B8-4683-44FB-BCB1-AB9263544C28",
+      "name" : "Configuration 1",
+      "options" : {
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "AsyncCachedImageTests",
+        "name" : "AsyncCachedImageTests"
+      }
+    }
+  ],
+  "version" : 1
+}

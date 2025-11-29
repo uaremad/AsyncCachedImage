@@ -1,0 +1,168 @@
+# SwiftLint configuration file
+# Version: 2.0 - Swift 6 Concurrency Enforcement
+disabled_rules:
+  - opening_brace # not compatible to SwiftFormat rule "wrapMultilineStatementBraces"
+opt_in_rules:
+  - closure_spacing
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - fallthrough
+  - fatal_error_message
+  - file_name
+  - first_where
+  - force_cast
+  - force_try
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - multiline_arguments
+  - operator_usage_whitespace
+  - overridden_super_call
+  - empty_count
+  - empty_string
+  - explicit_init
+  - closure_end_indentation
+  - collection_alignment
+excluded:
+  - Pods
+  - .tuist-bin
+  - .build
+  - .derivedData
+  - builds
+  - Derived
+  - DerivedData
+  - Docs
+  - Scripts
+  - Tuist
+  - fastlane
+  - ci_scripts
+  - Locations
+  - Templates
+  - CodeGen/.build
+  - CodeGen/.derivedData
+  - CodeGen/DerivedData
+  - Demo/.derivedData
+  - Demo/DerivedData
+  - App/.derivedData
+  - App/Derived
+  - Host/.derivedData
+  - Host/Derived
+  - 'Modules/*/.derivedData'
+  - 'Modules/*/Derived'
+  - Project.swift
+  - Package.swift
+  - SourcePackages
+  - fastlane
+identifier_name: 
+  allowed_symbols: _
+  excluded:
+    - id
+    - in
+    - is
+    - ok
+    - vc
+    - on
+    - to
+    - no
+    - x
+    - y
+    - z
+redundant_optional_initialization:
+  severity: error
+force_unwrapping:
+  severity: error
+multiple_closures_with_trailing_closure:
+  severity: error
+file_length:
+  warning: 550
+  ignore_comment_only_lines: true
+force_cast: error
+force_try: error
+function_body_length: 80
+function_parameter_count: 4
+large_tuple:
+  warning: 4  # allow up to 3 elements without warning
+  error: 6    # error only when exceeding 5 elements
+file_name:
+  excluded:
+    - Fonts.swift
+    - Project.swift
+    - Package.swift
+    - Assets.swift
+    - Dangerfile.swift
+line_length:
+  warning: 150
+  error: 300
+  ignores_comments: true
+nesting:
+  type_level:
+    warning: 2
+    error: 4
+type_body_length: 300
+type_name:
+  allowed_symbols: _
+
+# =============================================================================
+# SWIFT 6 CONCURRENCY ENFORCEMENT
+# =============================================================================
+custom_rules:
+  # Verbietet ObservableObject - nutze @Observable statt
+  no_observable_object:
+    name: "No ObservableObject"
+    message: "Use @Observable instead of ObservableObject for Swift 6. ObservableObject is legacy."
+    regex: ':\s*ObservableObject'
+    severity: warning
+    match_kinds:
+      - typeidentifier
+
+  # Verbietet @Published - nutze normale Properties mit @Observable
+  no_published:
+    name: "No @Published"
+    message: "Use @Observable instead of @Published. @Published is only for ObservableObject (legacy)."
+    regex: '@Published\s+'
+    severity: warning
+    match_kinds:
+      - attribute.builtin
+
+  # Verbietet DispatchQueue - nutze Task/async-await
+  no_dispatch_queue:
+    name: "No DispatchQueue"
+    message: "Use Task and async/await instead of DispatchQueue. DispatchQueue is forbidden in Swift 6 Strict Mode."
+    regex: 'DispatchQueue\.(main|global)'
+    severity: warning
+    match_kinds:
+      - identifier
+
+  # Verbietet DispatchWorkItem
+  no_dispatch_work_item:
+    name: "No DispatchWorkItem"
+    message: "Use Task<Void, Never> instead of DispatchWorkItem for cancellable work."
+    regex: 'DispatchWorkItem'
+    severity: warning
+    match_kinds:
+      - typeidentifier
+
+  # Warnt bei @StateObject (sollte @State sein bei @Observable)
+  prefer_state_over_stateobject:
+    name: "Prefer @State for @Observable"
+    message: "Use @State instead of @StateObject when working with @Observable ViewModels."
+    regex: '@StateObject\s+(?:private\s+|public\s+|internal\s+)?var\s+\w+:\s*\w*ViewModel'
+    severity: warning
+    match_kinds:
+      - attribute.builtin
+
+  # Verbietet .onReceive mit $ Publishers (nutze .onChange)
+  no_onreceive_with_published:
+    name: "No .onReceive with $ Publishers"
+    message: "Use .onChange instead of .onReceive for @Observable properties. $ publishers don't exist with @Observable."
+    regex: '\.onReceive\([^)]*\$'
+    severity: warning
+
+  # Warnt bei Task.detached (meistens falsch)
+  warn_task_detached:
+    name: "Task.detached usually wrong"
+    message: "Task.detached breaks actor isolation. Use Task {} instead unless you need explicit isolation breaking."
+    regex: 'Task\.detached'
+    severity: warning
+    match_kinds:
+      - identifier

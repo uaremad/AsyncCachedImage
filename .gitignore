@@ -1,0 +1,90 @@
+## Build generated
+build/
+builds/
+DerivedData/
+Derived/
+.derivedData/
+
+## Various settings
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+
+## Obj-C/Swift specific
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+.swiftpm/xcode
+.package.resolved
+Package.resolved
+
+# Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
+# Packages/
+# Package.pins
+.build/
+
+# Tuist
+#
+# Tuist generates the project files foro the CI pipeline,
+# do not push the project or workspace anymore
+Podfile.lock
+*.xcodeproj
+*.xcworkspace
+App/Derived/
+
+# CocoaPods
+#
+# We recommend against adding the Pods directory to your .gitignore. However
+# you should judge for yourself, the pros and cons are mentioned at:
+# https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
+#
+Pods/
+
+# Carthage
+#
+# Add this line if you want to avoid checking in source code from Carthage dependencies.
+# Carthage/Checkouts
+# Carthage/Build
+
+# Ignore everything in Carthage folder
+Carthage/
+
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/#source-control
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+
+## Other
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+modules.xml
+workspace.xml
+xcode.xml
+*/.idea
+.DS_Store
+*/podinstall.command
+
+# tuist
+.tuist-bin

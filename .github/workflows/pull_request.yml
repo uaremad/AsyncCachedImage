@@ -1,0 +1,60 @@
+name: Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Another Day, Another Lint
+    runs-on: macos-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Mise
+        uses: jdx/mise-action@v2
+
+      - name: Install Dependencies
+        run: make ci-setup
+
+      - name: Lint
+        run: make lint
+
+  test-ios:
+    name: iOS - Fingers Crossed
+    runs-on: macos-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: make ci-setup-brew
+
+      - name: Test iOS
+        run: make ci-test-ios
+
+  test-macos:
+    name: macOS - Easy Does It
+    runs-on: macos-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: make ci-setup-brew
+
+      - name: Test macOS
+        run: make ci-test-macos

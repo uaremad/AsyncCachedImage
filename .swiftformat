@@ -1,0 +1,12 @@
+--commas inline
+--enable blockComments
+--exclude DerivedData, _dev, Pods, Scripts, Docs
+--exclude CodeGen/.derivedData, CodeGen/DerivedData
+--exclude .derivedData, builds, .build, .tuist-bin, ci_scripts
+--exclude App/Derived, Derived, Templates, Locations
+--header "\n AsyncCachedImage\n\n Copyright © {year} Jan-Hendrik Damerau.\n https://github.com/uaremad/AsyncCachedImage\n\n Licensed under the MIT License\n Free to use without restrictions. See LICENSE file for full terms.\n"
+--ifdef no-indent
+--indent 4
+--importgrouping testable-bottom
+--wrapcollections before-first
+--wrapparameters before-first

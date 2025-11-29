@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Release branch (e.g. release/2025.11.1)'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.release_branch }}
+  cancel-in-progress: false
+
+jobs:
+  lint:
+    name: Another Day, Another Lint
+    runs-on: macos-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+
+      - name: Setup Mise
+        uses: jdx/mise-action@v2
+
+      - name: Install Dependencies
+        run: make ci-setup
+
+      - name: Lint
+        run: make lint
+
+  test-ios:
+    name: Test iOS
+    runs-on: macos-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+
+      - name: Install Dependencies
+        run: make ci-setup-brew
+
+      - name: Test iOS
+        run: make ci-test-ios
+
+  test-macos:
+    name: Test macOS
+    runs-on: macos-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+
+      - name: Install Dependencies
+        run: make ci-setup-brew
+
+      - name: Test macOS
+        run: make ci-test-macos

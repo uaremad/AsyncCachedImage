@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PreferenceSpecifiers</key>
+    <array>
+        <!-- Cache Section Header -->
+        <dict>
+            <key>Type</key>
+            <string>PSGroupSpecifier</string>
+            <key>Title</key>
+            <string>Image Cache</string>
+            <key>FooterText</key>
+            <string>Cache statistics are updated when the app enters background or terminates.</string>
+        </dict>
+        
+        <!-- Disk Cache Usage (Read-Only) -->
+        <dict>
+            <key>Type</key>
+            <string>PSTitleValueSpecifier</string>
+            <key>Title</key>
+            <string>Disk Usage</string>
+            <key>Key</key>
+            <string>cache_disk_usage</string>
+            <key>DefaultValue</key>
+            <string>0 KB</string>
+        </dict>
+        
+        <!-- Disk Cache Capacity (Read-Only) -->
+        <dict>
+            <key>Type</key>
+            <string>PSTitleValueSpecifier</string>
+            <key>Title</key>
+            <string>Disk Capacity</string>
+            <key>Key</key>
+            <string>cache_disk_capacity</string>
+            <key>DefaultValue</key>
+            <string>500 MB</string>
+        </dict>
+        
+        <!-- Memory Cache Usage (Read-Only) -->
+        <dict>
+            <key>Type</key>
+            <string>PSTitleValueSpecifier</string>
+            <key>Title</key>
+            <string>Memory Usage</string>
+            <key>Key</key>
+            <string>cache_memory_usage</string>
+            <key>DefaultValue</key>
+            <string>0 KB</string>
+        </dict>
+        
+        <!-- Cached Entry Count (Read-Only) -->
+        <dict>
+            <key>Type</key>
+            <string>PSTitleValueSpecifier</string>
+            <key>Title</key>
+            <string>Cached Images</string>
+            <key>Key</key>
+            <string>cache_entry_count</string>
+            <key>DefaultValue</key>
+            <string>0</string>
+        </dict>
+        
+        <!-- Clear Cache Toggle -->
+        <dict>
+            <key>Type</key>
+            <string>PSToggleSwitchSpecifier</string>
+            <key>Title</key>
+            <string>Clear Cache on Next Launch</string>
+            <key>Key</key>
+            <string>cache_clear_on_launch</string>
+            <key>DefaultValue</key>
+            <false/>
+        </dict>
+        
+        <!-- About Section Header -->
+        <dict>
+            <key>Type</key>
+            <string>PSGroupSpecifier</string>
+            <key>Title</key>
+            <string>About</string>
+        </dict>
+        
+        <!-- Version (Read-Only) -->
+        <dict>
+            <key>Type</key>
+            <string>PSTitleValueSpecifier</string>
+            <key>Title</key>
+            <string>Version</string>
+            <key>Key</key>
+            <string>app_version</string>
+            <key>DefaultValue</key>
+            <string>1.0.0</string>
+        </dict>
+        
+        <!-- Build (Read-Only) -->
+        <dict>
+            <key>Type</key>
+            <string>PSTitleValueSpecifier</string>
+            <key>Title</key>
+            <string>Build</string>
+            <key>Key</key>
+            <string>app_build</string>
+            <key>DefaultValue</key>
+            <string>1</string>
+        </dict>
+    </array>
+</dict>
+</plist>
