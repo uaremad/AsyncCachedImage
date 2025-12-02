@@ -38,12 +38,19 @@ enum ImageDecoder {
     /// - Parameters:
     ///   - data: The raw image data (JPEG, PNG, HEIC, etc.).
     ///   - asThumbnail: Whether to decode as a downscaled thumbnail.
+    ///   - thumbnailMaxPixelSize: Maximum pixel size for thumbnail decoding.
+    ///                            Only used when `asThumbnail` is true.
+    ///                            Defaults to `Configuration.Defaults.thumbnailMaxPixelSize`.
     /// - Returns: The decoded platform image, or nil on failure.
-    static func decode(from data: Data, asThumbnail: Bool) -> PlatformImage? {
+    static func decode(
+        from data: Data,
+        asThumbnail: Bool,
+        thumbnailMaxPixelSize: Int = Configuration.Defaults.thumbnailMaxPixelSize
+    ) -> PlatformImage? {
         guard !data.isEmpty else { return nil }
 
         if asThumbnail {
-            return decodeThumbnail(from: data)
+            return decodeThumbnail(from: data, maxPixelSize: thumbnailMaxPixelSize)
         } else {
             return decodeFullSize(from: data)
         }
@@ -56,13 +63,15 @@ enum ImageDecoder {
     /// Uses ImageIO to efficiently create a thumbnail during decode,
     /// avoiding the memory overhead of decoding the full image first.
     ///
-    /// - Parameter data: The raw image data.
+    /// - Parameters:
+    ///   - data: The raw image data.
+    ///   - maxPixelSize: Maximum pixel size for the thumbnail.
     /// - Returns: A downscaled platform image, or nil on failure.
-    private static func decodeThumbnail(from data: Data) -> PlatformImage? {
+    private static func decodeThumbnail(from data: Data, maxPixelSize: Int) -> PlatformImage? {
         guard let source = createImageSource(from: data) else {
             return nil
         }
-        guard let cgImage = createThumbnail(from: source) else {
+        guard let cgImage = createThumbnail(from: source, maxPixelSize: maxPixelSize) else {
             return nil
         }
         guard isValidDimensions(cgImage) else {
@@ -81,22 +90,28 @@ enum ImageDecoder {
 
     /// Creates a thumbnail from an image source.
     ///
-    /// - Parameter source: The image source to create a thumbnail from.
+    /// - Parameters:
+    ///   - source: The image source to create a thumbnail from.
+    ///   - maxPixelSize: Maximum pixel size for the thumbnail.
     /// - Returns: A downscaled CGImage, or nil on failure.
-    private static func createThumbnail(from source: CGImageSource) -> CGImage? {
-        CGImageSourceCreateThumbnailAtIndex(source, 0, thumbnailOptions)
+    private static func createThumbnail(from source: CGImageSource, maxPixelSize: Int) -> CGImage? {
+        let options = createThumbnailOptions(maxPixelSize: maxPixelSize)
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
     }
 
-    /// Options for thumbnail creation.
+    /// Creates options for thumbnail generation.
     ///
     /// Configures ImageIO to:
     /// - Always create a thumbnail (even if one isn't embedded)
-    /// - Limit the maximum size to `thumbnailMaxSize` pixels
+    /// - Limit the maximum size to `maxPixelSize` pixels
     /// - Apply EXIF orientation transforms
-    private static var thumbnailOptions: CFDictionary {
+    ///
+    /// - Parameter maxPixelSize: Maximum pixel size for the thumbnail.
+    /// - Returns: Options dictionary for CGImageSourceCreateThumbnailAtIndex.
+    private static func createThumbnailOptions(maxPixelSize: Int) -> CFDictionary {
         [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceThumbnailMaxPixelSize: Constants.thumbnailMaxSize,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
             kCGImageSourceCreateThumbnailWithTransform: true
         ] as CFDictionary
     }
@@ -199,11 +214,6 @@ enum ImageDecoder {
 private extension ImageDecoder {
     /// Configuration constants for image decoding.
     enum Constants {
-        /// Maximum pixel size for thumbnail generation.
-        ///
-        /// The thumbnail will be scaled to fit within this dimension on its longest edge.
-        static let thumbnailMaxSize = 400
-
         /// Minimum valid dimension for decoded images.
         ///
         /// Images with width or height equal to or less than this value are rejected.

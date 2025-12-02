@@ -368,7 +368,11 @@ final class ImageDownloaderTests: XCTestCase {
     func testDecodeImageDataWithValidPNG() async throws {
         let pngData = createValidPNGData(width: 100, height: 100)
 
-        let image = try ImageDownloader.shared.decodeImageData(pngData, asThumbnail: false)
+        let image = try ImageDownloader.shared.decodeImageData(
+            pngData,
+            asThumbnail: false,
+            thumbnailMaxPixelSize: Configuration.Defaults.thumbnailMaxPixelSize
+        )
 
         XCTAssertNotNil(image)
     }
@@ -379,7 +383,13 @@ final class ImageDownloaderTests: XCTestCase {
     func testDecodeImageDataWithEmptyDataThrows() async {
         let emptyData = Data()
 
-        XCTAssertThrowsError(try ImageDownloader.shared.decodeImageData(emptyData, asThumbnail: false)) { error in
+        XCTAssertThrowsError(
+            try ImageDownloader.shared.decodeImageData(
+                emptyData,
+                asThumbnail: false,
+                thumbnailMaxPixelSize: Configuration.Defaults.thumbnailMaxPixelSize
+            )
+        ) { error in
             XCTAssertTrue(error is InternalDownloadError)
         }
     }
@@ -392,7 +402,13 @@ final class ImageDownloaderTests: XCTestCase {
     func testDecodeImageDataWithInvalidDataThrows() async {
         let invalidData = Data([0x00, 0x01, 0x02])
 
-        XCTAssertThrowsError(try ImageDownloader.shared.decodeImageData(invalidData, asThumbnail: false)) { error in
+        XCTAssertThrowsError(
+            try ImageDownloader.shared.decodeImageData(
+                invalidData,
+                asThumbnail: false,
+                thumbnailMaxPixelSize: Configuration.Defaults.thumbnailMaxPixelSize
+            )
+        ) { error in
             XCTAssertTrue(error is InternalDownloadError)
         }
     }

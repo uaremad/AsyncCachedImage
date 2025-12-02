@@ -57,7 +57,12 @@ actor DiskCache {
             return nil
         }
 
-        guard let image = ImageDecoder.decode(from: data, asThumbnail: asThumbnail) else {
+        let thumbnailSize = await MainActor.run { Configuration.shared.thumbnailMaxPixelSize }
+        guard let image = ImageDecoder.decode(
+            from: data,
+            asThumbnail: asThumbnail,
+            thumbnailMaxPixelSize: thumbnailSize
+        ) else {
             return nil
         }
 

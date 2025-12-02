@@ -104,9 +104,15 @@ actor ImageDownloader {
             await clearDiskCache(for: url)
         }
 
+        let thumbnailSize = await MainActor.run { Configuration.shared.thumbnailMaxPixelSize }
+
         do {
             let downloadResult = try await fetchImageData(from: url, ignoreCache: ignoreCache)
-            let image = try decodeImageData(downloadResult.data, asThumbnail: asThumbnail)
+            let image = try decodeImageData(
+                downloadResult.data,
+                asThumbnail: asThumbnail,
+                thumbnailMaxPixelSize: thumbnailSize
+            )
 
             await storeInAllCaches(
                 image: image,
@@ -289,11 +295,20 @@ extension ImageDownloader {
     /// - Parameters:
     ///   - data: The raw image data to decode.
     ///   - asThumbnail: Whether to decode as a downscaled thumbnail.
+    ///   - thumbnailMaxPixelSize: Maximum pixel size for thumbnail decoding.
     /// - Returns: The decoded platform image.
     /// - Throws: `InternalDownloadError` if decoding fails.
-    nonisolated func decodeImageData(_ data: Data, asThumbnail: Bool) throws -> PlatformImage {
+    nonisolated func decodeImageData(
+        _ data: Data,
+        asThumbnail: Bool,
+        thumbnailMaxPixelSize: Int
+    ) throws -> PlatformImage {
         try DataValidator.validateNotEmpty(data)
-        let image = try ImageDecoderBridge.decode(data, asThumbnail: asThumbnail)
+        let image = try ImageDecoderBridge.decode(
+            data,
+            asThumbnail: asThumbnail,
+            thumbnailMaxPixelSize: thumbnailMaxPixelSize
+        )
         try ImageValidator.validateDimensions(image)
         return image
     }
@@ -323,10 +338,19 @@ private enum ImageDecoderBridge {
     /// - Parameters:
     ///   - data: The raw image data.
     ///   - asThumbnail: Whether to decode as a thumbnail.
+    ///   - thumbnailMaxPixelSize: Maximum pixel size for thumbnail decoding.
     /// - Returns: The decoded platform image.
     /// - Throws: `InternalDownloadError.decodingFailed` if decoding fails.
-    static func decode(_ data: Data, asThumbnail: Bool) throws -> PlatformImage {
-        guard let decoded = ImageDecoder.decode(from: data, asThumbnail: asThumbnail) else {
+    static func decode(
+        _ data: Data,
+        asThumbnail: Bool,
+        thumbnailMaxPixelSize: Int
+    ) throws -> PlatformImage {
+        guard let decoded = ImageDecoder.decode(
+            from: data,
+            asThumbnail: asThumbnail,
+            thumbnailMaxPixelSize: thumbnailMaxPixelSize
+        ) else {
             throw InternalDownloadError.decodingFailed
         }
         return decoded
