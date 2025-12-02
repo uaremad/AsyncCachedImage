@@ -40,7 +40,7 @@ import SwiftUI
 ///     transaction: Transaction(animation: .easeInOut)
 /// ) { phase in
 ///     switch phase {
-///     case .empty, .loading:
+///     case .empty:
 ///         ProgressView()
 ///     case .success(let image):
 ///         image.resizable()
@@ -266,7 +266,7 @@ public extension AsyncCachedImage where Content == AnyView {
                         content(image)
                     case .failure:
                         failure()
-                    case .empty, .loading:
+                    case .empty:
                         placeholder()
                     }
                 }
@@ -313,7 +313,7 @@ public extension AsyncCachedImage where Content == AnyView {
                         content(image)
                     case let .failure(error):
                         failure(error)
-                    case .empty, .loading:
+                    case .empty:
                         placeholder()
                     }
                 }
@@ -368,8 +368,6 @@ private extension AsyncCachedImage {
     ///
     /// - Parameter url: The URL to download from.
     func loadFromNetwork(url: URL) async {
-        updatePhase(.loading)
-
         let ignoreCache = loadingOptions.ignoreCache
         let outcome = await ImageDownloader.shared.downloadWithResult(
             from: url,

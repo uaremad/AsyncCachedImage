@@ -22,9 +22,8 @@ import AppKit
 
 /// Tests for AsyncCachedImagePhase which represents loading states.
 ///
-/// AsyncCachedImagePhase mirrors Apple's AsyncImagePhase:
-/// - `.empty`: Initial state, no loading has started
-/// - `.loading`: Image is being fetched from cache or network
+/// AsyncCachedImagePhase mirrors Apple's AsyncImagePhase for drop-in compatibility:
+/// - `.empty`: Initial state, image may be loading
 /// - `.success(Image)`: Image loaded successfully
 /// - `.failure(ImageLoadingError)`: Loading failed with error
 ///
@@ -46,14 +45,6 @@ final class AsyncCachedImagePhaseTests: XCTestCase {
     /// Expected: Phase is not nil.
     func testEmptyCaseExists() {
         let phase = AsyncCachedImagePhase.empty
-        XCTAssertNotNil(phase)
-    }
-
-    /// Verifies loading case can be instantiated.
-    ///
-    /// Expected: Phase is not nil.
-    func testLoadingCaseExists() {
-        let phase = AsyncCachedImagePhase.loading
         XCTAssertNotNil(phase)
     }
 
@@ -98,15 +89,6 @@ final class AsyncCachedImagePhaseTests: XCTestCase {
         XCTAssertNil(phase.image)
     }
 
-    /// Verifies image property returns nil for loading phase.
-    ///
-    /// Expected: image is nil.
-    func testImagePropertyReturnsNilForLoading() {
-        let phase = AsyncCachedImagePhase.loading
-
-        XCTAssertNil(phase.image)
-    }
-
     /// Verifies image property returns the image for success phase.
     ///
     /// Expected: image is not nil.
@@ -134,15 +116,6 @@ final class AsyncCachedImagePhaseTests: XCTestCase {
     /// Expected: error is nil.
     func testErrorPropertyReturnsNilForEmpty() {
         let phase = AsyncCachedImagePhase.empty
-
-        XCTAssertNil(phase.error)
-    }
-
-    /// Verifies error property returns nil for loading phase.
-    ///
-    /// Expected: error is nil.
-    func testErrorPropertyReturnsNilForLoading() {
-        let phase = AsyncCachedImagePhase.loading
 
         XCTAssertNil(phase.error)
     }
@@ -196,7 +169,6 @@ final class AsyncCachedImagePhaseTests: XCTestCase {
 
         let phases: [AsyncCachedImagePhase] = [
             .empty,
-            .loading,
             .success(image),
             .failure(error)
         ]
@@ -204,8 +176,6 @@ final class AsyncCachedImagePhaseTests: XCTestCase {
         for phase in phases {
             switch phase {
             case .empty:
-                XCTAssertTrue(true)
-            case .loading:
                 XCTAssertTrue(true)
             case .success:
                 XCTAssertTrue(true)
@@ -244,14 +214,6 @@ final class InternalPhaseTests: XCTestCase {
     /// Expected: Phase is not nil.
     func testEmptyCaseExists() {
         let phase = InternalPhase.empty
-        XCTAssertNotNil(phase)
-    }
-
-    /// Verifies loading case can be instantiated.
-    ///
-    /// Expected: Phase is not nil.
-    func testLoadingCaseExists() {
-        let phase = InternalPhase.loading
         XCTAssertNotNil(phase)
     }
 
@@ -306,16 +268,6 @@ final class InternalPhaseTests: XCTestCase {
         XCTAssertEqual(phase1, phase2)
     }
 
-    /// Verifies loading equals loading.
-    ///
-    /// Expected: Phases are equal.
-    func testLoadingEqualsLoading() {
-        let phase1 = InternalPhase.loading
-        let phase2 = InternalPhase.loading
-
-        XCTAssertEqual(phase1, phase2)
-    }
-
     /// Verifies success with same image reference are equal.
     ///
     /// Uses reference equality (===) for images.
@@ -357,16 +309,6 @@ final class InternalPhaseTests: XCTestCase {
         XCTAssertEqual(phase1, phase2)
     }
 
-    /// Verifies empty does not equal loading.
-    ///
-    /// Expected: Phases are not equal.
-    func testEmptyDoesNotEqualLoading() {
-        let phase1 = InternalPhase.empty
-        let phase2 = InternalPhase.loading
-
-        XCTAssertNotEqual(phase1, phase2)
-    }
-
     /// Verifies empty does not equal success.
     ///
     /// Expected: Phases are not equal.
@@ -401,21 +343,6 @@ final class InternalPhaseTests: XCTestCase {
             XCTAssertTrue(true)
         } else {
             XCTFail("Expected empty phase")
-        }
-    }
-
-    /// Verifies loading converts to public loading.
-    ///
-    /// Expected: Result is .loading case.
-    func testLoadingConvertsToPublicLoading() {
-        let internal_ = InternalPhase.loading
-
-        let public_ = internal_.toPublicPhase(scale: 1.0)
-
-        if case .loading = public_ {
-            XCTAssertTrue(true)
-        } else {
-            XCTFail("Expected loading phase")
         }
     }
 
