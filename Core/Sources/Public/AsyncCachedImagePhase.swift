@@ -14,8 +14,9 @@ import SwiftUI
 
 /// The current phase of the asynchronous image loading operation.
 ///
-/// Similar to Apple's `AsyncImagePhase`, this enum represents the current state
-/// of an image loading operation and provides access to the loaded image or error.
+/// Matches Apple's `AsyncImagePhase` for drop-in compatibility.
+/// This enum represents the current state of an image loading operation
+/// and provides access to the loaded image or error.
 ///
 /// ## Usage
 ///
@@ -23,8 +24,6 @@ import SwiftUI
 /// AsyncCachedImage(url: imageURL) { phase in
 ///     switch phase {
 ///     case .empty:
-///         ProgressView()
-///     case .loading:
 ///         ProgressView()
 ///     case .success(let image):
 ///         image.resizable().scaledToFit()
@@ -39,11 +38,9 @@ import SwiftUI
 public enum AsyncCachedImagePhase: Sendable {
     /// No image is loaded yet.
     ///
-    /// This is the initial state before any loading begins.
+    /// This is the initial state before loading completes.
+    /// The image may be actively loading while in this state.
     case empty
-
-    /// The image is currently being loaded from cache or network.
-    case loading
 
     /// The image loaded successfully.
     ///
@@ -86,9 +83,6 @@ enum InternalPhase: Sendable, Equatable {
     /// No image is loaded yet.
     case empty
 
-    /// The image is currently being loaded.
-    case loading
-
     /// The image loaded successfully.
     case success(PlatformImage)
 
@@ -106,7 +100,7 @@ enum InternalPhase: Sendable, Equatable {
     /// - Returns: True if the phases are equal.
     static func == (lhs: InternalPhase, rhs: InternalPhase) -> Bool {
         switch (lhs, rhs) {
-        case (.empty, .empty), (.loading, .loading):
+        case (.empty, .empty):
             true
         case let (.success(lhsImage), .success(rhsImage)):
             lhsImage === rhsImage
@@ -127,8 +121,6 @@ enum InternalPhase: Sendable, Equatable {
         switch self {
         case .empty:
             return .empty
-        case .loading:
-            return .loading
         case let .success(platformImage):
             let image = PlatformImageConverter.toSwiftUIImage(platformImage, scale: scale)
             return .success(image)
