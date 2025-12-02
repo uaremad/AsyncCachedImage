@@ -21,24 +21,26 @@ import AppKit
 /// Thread-safe in-memory cache for decoded images using actor isolation.
 ///
 /// Provides fast access to recently used images without disk I/O.
-/// Uses Swift 6 actor isolation for proper concurrency safety.
+/// Uses Swift 6 actor isolation for coordinated async operations.
 ///
 /// The memory cache stores fully decoded `PlatformImage` instances for instant display.
 /// It uses NSCache internally which automatically evicts entries under memory pressure.
+///
+/// ## Synchronous Access
+///
+/// For synchronous cache lookups (e.g., during view initialization),
+/// use `MemoryCacheStorage.shared` directly. This prevents view flicker
+/// when parent views re-render.
 ///
 /// - Note: Thumbnail and full-size variants are stored separately using different cache keys.
 actor MemoryCache {
     /// The shared memory cache instance.
     static let shared = MemoryCache()
 
-    /// The underlying NSCache for image storage.
-    private let cache: NSCache<NSURL, PlatformImage>
+    /// The underlying storage backend.
+    private let storage = MemoryCacheStorage.shared
 
-    private init() {
-        cache = NSCache<NSURL, PlatformImage>()
-        cache.countLimit = Constants.countLimit
-        cache.totalCostLimit = Constants.costLimitBytes
-    }
+    private init() {}
 
     // MARK: - Public API
 
@@ -49,8 +51,7 @@ actor MemoryCache {
     ///   - thumb: Whether to retrieve the thumbnail variant.
     /// - Returns: The cached image, or nil if not found.
     func image(for url: URL, thumb: Bool) -> PlatformImage? {
-        let key = createCacheKey(for: url, thumb: thumb)
-        return cache.object(forKey: key)
+        storage.image(for: url, thumb: thumb)
     }
 
     /// Stores an image in the cache.
@@ -63,9 +64,8 @@ actor MemoryCache {
     ///   - url: The image URL used as the cache key.
     ///   - thumb: Whether this is a thumbnail variant.
     func store(_ image: PlatformImage, for url: URL, thumb: Bool) {
-        let key = createCacheKey(for: url, thumb: thumb)
         let cost = MemoryCostCalculator.estimateCost(for: image)
-        cache.setObject(image, forKey: key, cost: cost)
+        storage.store(image, for: url, thumb: thumb, cost: cost)
     }
 
     /// Removes an image from the cache.
@@ -74,47 +74,14 @@ actor MemoryCache {
     ///   - url: The image URL used as the cache key.
     ///   - thumb: Whether to remove the thumbnail variant.
     func remove(for url: URL, thumb: Bool) {
-        let key = createCacheKey(for: url, thumb: thumb)
-        cache.removeObject(forKey: key)
+        storage.remove(for: url, thumb: thumb)
     }
 
     /// Removes all cached images.
     ///
     /// Clears both full-size and thumbnail variants.
     func clearAll() {
-        cache.removeAllObjects()
-    }
-
-    // MARK: - Private Helpers
-
-    /// Creates a cache key for the given URL and variant.
-    ///
-    /// Thumbnails use a `#thumb` suffix to differentiate from full-size images.
-    ///
-    /// - Parameters:
-    ///   - url: The base image URL.
-    ///   - thumb: Whether this is a thumbnail variant.
-    /// - Returns: An NSURL suitable for use as an NSCache key.
-    private func createCacheKey(for url: URL, thumb: Bool) -> NSURL {
-        if thumb {
-            return NSURL(string: url.absoluteString + "#thumb") ?? url as NSURL
-        }
-        return url as NSURL
-    }
-}
-
-// MARK: - Constants
-
-private extension MemoryCache {
-    /// Default configuration constants for the memory cache.
-    enum Constants {
-        /// Maximum number of images to keep in cache.
-        static let countLimit = 150
-
-        /// Maximum total cost (bytes) for all cached images.
-        ///
-        /// Default: 100 MB
-        static let costLimitBytes = 100 * 1024 * 1024
+        storage.clearAll()
     }
 }
 

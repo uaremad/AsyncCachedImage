@@ -49,6 +49,13 @@ import SwiftUI
 ///     }
 /// }
 /// ```
+///
+/// ## Flicker-Free Re-rendering
+///
+/// When parent views re-render (e.g., due to SwiftData updates), this view
+/// checks the memory cache synchronously during initialization. If the image
+/// is already cached, it displays immediately without any loading state,
+/// preventing visual flicker.
 @MainActor
 public struct AsyncCachedImage<Content: View>: View {
     /// The URL of the image to load, or nil if no image should be loaded.
@@ -71,7 +78,9 @@ public struct AsyncCachedImage<Content: View>: View {
     @ViewBuilder private var content: (AsyncCachedImagePhase) -> Content
 
     /// The current loading phase.
-    @State private var phase: InternalPhase = .empty
+    ///
+    /// Initialized from memory cache synchronously to prevent flicker.
+    @State private var phase: InternalPhase
 
     /// The timestamp of the last revalidation attempt.
     @State private var lastRevalidation: Date?
@@ -86,6 +95,9 @@ public struct AsyncCachedImage<Content: View>: View {
     ///
     /// This initializer provides full control over all loading states,
     /// similar to Apple's `AsyncImage(url:scale:transaction:content:)`.
+    ///
+    /// The initial phase is set synchronously from the memory cache if available,
+    /// preventing flicker when parent views re-render.
     ///
     /// - Parameters:
     ///   - url: The URL of the image to load, or nil for no image.
@@ -106,14 +118,17 @@ public struct AsyncCachedImage<Content: View>: View {
         self.transaction = transaction
         self.asThumbnail = asThumbnail
         self.content = content
+
+        // Initialize phase from memory cache synchronously to prevent flicker
+        let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
+        _phase = State(initialValue: initialPhase)
     }
 
     /// The view body that renders the current phase.
     public var body: some View {
         content(phase.toPublicPhase(scale: scale))
             .task(id: url) {
-                await initializePhaseFromCache()
-                await loadImageIfNeeded()
+                await loadFromCacheOrNetwork()
             }
             .onAppear {
                 Task {
@@ -125,6 +140,27 @@ public struct AsyncCachedImage<Content: View>: View {
                 guard oldPhase != newPhase else { return }
                 applyTransaction()
             }
+    }
+
+    // MARK: - Initial Phase Resolution
+
+    /// Resolves the initial phase by checking the memory cache synchronously.
+    ///
+    /// This static method is called during view initialization to provide
+    /// an immediate cached image if available, preventing flicker.
+    ///
+    /// - Parameters:
+    ///   - url: The image URL to look up.
+    ///   - asThumbnail: Whether to look up the thumbnail variant.
+    /// - Returns: Success phase with cached image, or empty phase if not cached.
+    private static func resolveInitialPhase(url: URL?, asThumbnail: Bool) -> InternalPhase {
+        guard let url else { return .empty }
+
+        if let cachedImage = MemoryCacheStorage.shared.image(for: url, thumb: asThumbnail) {
+            return .success(cachedImage)
+        }
+
+        return .empty
     }
 
     /// Applies the transaction animation if configured.
@@ -189,6 +225,10 @@ public extension AsyncCachedImage where Content == AnyView {
                 }
             )
         }
+
+        // Initialize phase from memory cache synchronously to prevent flicker
+        let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
+        _phase = State(initialValue: initialPhase)
     }
 }
 
@@ -232,6 +272,10 @@ public extension AsyncCachedImage where Content == AnyView {
                 }
             )
         }
+
+        // Initialize phase from memory cache synchronously to prevent flicker
+        let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
+        _phase = State(initialValue: initialPhase)
     }
 }
 
@@ -275,53 +319,24 @@ public extension AsyncCachedImage where Content == AnyView {
                 }
             )
         }
+
+        // Initialize phase from memory cache synchronously to prevent flicker
+        let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
+        _phase = State(initialValue: initialPhase)
     }
 }
 
-// MARK: - Cache Initialization
+// MARK: - Cache and Network Loading
 
 private extension AsyncCachedImage {
-    /// Initializes the phase from cached data if available.
+    /// Loads the image from cache or network as needed.
     ///
-    /// Checks memory cache first for instant display, then falls back to disk cache.
-    func initializePhaseFromCache() async {
-        guard case .empty = phase else { return }
-        guard let url else { return }
-
-        if let memoryImage = await loadFromMemoryCache(url: url) {
-            phase = .success(memoryImage)
-            return
-        }
-
-        if let diskImage = await loadFromDiskCache(url: url) {
-            phase = .success(diskImage)
-        }
-    }
-
-    /// Loads an image from the memory cache.
-    ///
-    /// - Parameter url: The URL to look up.
-    /// - Returns: The cached image, or nil if not found.
-    func loadFromMemoryCache(url: URL) async -> PlatformImage? {
-        await MemoryCache.shared.image(for: url, thumb: asThumbnail)
-    }
-
-    /// Loads an image from the disk cache.
-    ///
-    /// - Parameter url: The URL to look up.
-    /// - Returns: The cached image, or nil if not found.
-    func loadFromDiskCache(url: URL) async -> PlatformImage? {
-        await DiskCache.shared.loadCachedImage(for: url, asThumbnail: asThumbnail)
-    }
-}
-
-// MARK: - Async Loading
-
-private extension AsyncCachedImage {
-    /// Loads the image from network if not already cached.
-    ///
-    /// Only executes if the current phase is `.empty`.
-    func loadImageIfNeeded() async {
+    /// This method handles the complete loading flow:
+    /// 1. If already loaded (from sync init), skip
+    /// 2. Check disk cache if not in memory
+    /// 3. Load from network if not cached
+    func loadFromCacheOrNetwork() async {
+        // Already loaded from memory cache in init
         guard case .empty = phase else { return }
 
         guard let url else {
@@ -331,6 +346,28 @@ private extension AsyncCachedImage {
             return
         }
 
+        // Try disk cache before network
+        if let diskImage = await loadFromDiskCache(url: url) {
+            updatePhase(.success(diskImage))
+            return
+        }
+
+        // Load from network
+        await loadFromNetwork(url: url)
+    }
+
+    /// Loads an image from the disk cache.
+    ///
+    /// - Parameter url: The URL to look up.
+    /// - Returns: The cached image, or nil if not found.
+    func loadFromDiskCache(url: URL) async -> PlatformImage? {
+        await DiskCache.shared.loadCachedImage(for: url, asThumbnail: asThumbnail)
+    }
+
+    /// Loads an image from the network.
+    ///
+    /// - Parameter url: The URL to download from.
+    func loadFromNetwork(url: URL) async {
         updatePhase(.loading)
 
         let ignoreCache = loadingOptions.ignoreCache
@@ -353,8 +390,6 @@ private extension AsyncCachedImage {
     }
 
     /// Updates the phase, optionally within a transaction.
-    ///
-    /// If the transaction has an animation, the phase change is wrapped in that transaction.
     ///
     /// - Parameter newPhase: The new phase to set.
     func updatePhase(_ newPhase: InternalPhase) {
