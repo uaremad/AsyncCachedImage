@@ -42,7 +42,7 @@ final class RevalidationResultTests: XCTestCase {
     ///
     /// Expected: RevalidationResult.error is not nil.
     func testErrorCaseExists() {
-        let result = RevalidationResult.error
+        let result = RevalidationResult.error(.networkFailure("timeout"))
         XCTAssertNotNil(result)
     }
 
@@ -68,7 +68,11 @@ final class RevalidationResultTests: XCTestCase {
     ///
     /// Expected: All cases are handled without default clause.
     func testAllCasesCanBeHandled() {
-        let results: [RevalidationResult] = [.valid, .invalid, .error]
+        let results: [RevalidationResult] = [
+            .valid,
+            .invalid,
+            .error(.networkFailure("timeout"))
+        ]
 
         for result in results {
             switch result {
@@ -117,7 +121,7 @@ final class RevalidationResultTests: XCTestCase {
     ///
     /// Expected: `if case .error` matches the .error case.
     func testErrorPatternMatching() {
-        let result = RevalidationResult.error
+        let result = RevalidationResult.error(.invalidResponse)
 
         if case .error = result {
             XCTAssertTrue(true)
@@ -319,39 +323,45 @@ final class CacheRevalidatorIntegrationTests: XCTestCase {
 
     // MARK: - Integration Tests
 
-    /// Verifies revalidation returns a boolean result for valid URLs.
+    /// Verifies revalidation returns a result for valid URLs.
     ///
-    /// The revalidation process should complete and return either
-    /// true (valid) or false (invalid) without throwing errors.
+    /// The revalidation process should complete and return a
+    /// RevalidationResult without throwing errors.
     ///
     /// Note: This test makes an actual network request and requires internet connectivity.
     /// In a CI environment, this may need to be skipped or mocked.
     ///
-    /// Expected: Result is a boolean value (true or false).
+    /// Expected: Result is one of the RevalidationResult cases.
     func testRevalidateReturnsResult() async {
         let metadata = Metadata(etag: nil, lastModified: nil)
 
-        let isValid = await CacheRevalidator.revalidate(for: testURL, metadata: metadata)
+        let result = await CacheRevalidator.revalidate(for: testURL, metadata: metadata)
 
-        XCTAssertNotNil(isValid)
+        switch result {
+        case .valid, .invalid, .error:
+            XCTAssertTrue(true)
+        }
     }
 
-    /// Verifies revalidation assumes cache is valid on network errors.
+    /// Verifies revalidation reports errors on network failures.
     ///
     /// When the server is unreachable (DNS failure, timeout, etc.),
-    /// the cache should be assumed valid to prevent unnecessary
-    /// cache invalidation and provide offline resilience.
+    /// the error should be surfaced to allow handling or retries.
     ///
-    /// Expected: Returns true (cache valid) for unreachable servers.
-    func testRevalidateWithInvalidURLReturnsTrue() async {
+    /// Expected: Returns .error for unreachable servers.
+    func testRevalidateWithInvalidURLReturnsError() async {
         guard let invalidURL = URL(string: "https://invalid.invalid.invalid/image.jpg") else {
             XCTFail("Failed to create invalid URL")
             return
         }
         let metadata = Metadata(etag: "test", lastModified: nil)
 
-        let isValid = await CacheRevalidator.revalidate(for: invalidURL, metadata: metadata)
+        let result = await CacheRevalidator.revalidate(for: invalidURL, metadata: metadata)
 
-        XCTAssertTrue(isValid)
+        if case .error = result {
+            XCTAssertTrue(true)
+        } else {
+            XCTFail("Expected error result for invalid URL")
+        }
     }
 }

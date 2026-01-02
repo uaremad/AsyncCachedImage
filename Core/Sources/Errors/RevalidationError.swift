@@ -13,6 +13,9 @@ import Foundation
 // MARK: - RevalidationError
 
 /// Errors that can occur during cache revalidation.
+///
+/// These errors are surfaced when a cached resource cannot be checked
+/// against the server using conditional headers.
 enum RevalidationError: Error, Equatable, Sendable {
     /// The server response was not a valid HTTP response.
     case invalidResponse
@@ -21,4 +24,18 @@ enum RevalidationError: Error, Equatable, Sendable {
     ///
     /// - Parameter message: A description of the network failure.
     case networkFailure(String)
+}
+
+// MARK: - RevalidationError + LocalizedError
+
+extension RevalidationError: LocalizedError {
+    /// Human-readable description for logging or UI surfaces.
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse:
+            "Invalid server response during revalidation"
+        case let .networkFailure(message):
+            message.isEmpty ? "Network error during revalidation" : message
+        }
+    }
 }
