@@ -216,7 +216,8 @@ struct MyApp: App {
             revalidationThrottleInterval: 10,
             thumbnailMaxPixelSize: 300,
             memoryCacheCountLimit: 200,
-            memoryCacheSizeLimit: 150 * 1024 * 1024
+            memoryCacheSizeLimit: 150 * 1024 * 1024,
+            logLevel: .trace
         )
     }
     
@@ -235,6 +236,15 @@ struct MyApp: App {
 | `thumbnailMaxPixelSize` | 400 px | Maximum pixel size for thumbnail decoding |
 | `memoryCacheCountLimit` | 150 | Maximum decoded images in memory |
 | `memoryCacheSizeLimit` | 100 MB | Maximum memory for decoded images |
+| `logLevel` | `.none` | Global logging verbosity |
+
+### Logging
+
+Set the global log level via configuration:
+
+```swift
+Configuration.shared.logLevel = .warn
+```
 
 ### Per-Image Configuration
 

@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -474,18 +474,18 @@ private extension ImageDownloader {
     ///   - url: The URL being downloaded.
     ///   - ignoreCache: Whether cache is being bypassed.
     func logDownloadStart(url: URL, ignoreCache: Bool) {
-        #if DEBUG
-        print("[ImageDownloader] Downloading: \(url.lastPathComponent), ignoreCache: \(ignoreCache)")
-        #endif
+        Logging.log?.trace(
+            "[ImageDownloader] Downloading: \(url.lastPathComponent), ignoreCache: \(ignoreCache)"
+        )
     }
 
     /// Logs successful completion of a download.
     ///
     /// - Parameter url: The URL that was downloaded.
     func logDownloadComplete(url: URL) {
-        #if DEBUG
-        print("[ImageDownloader] Download complete: \(url.lastPathComponent)")
-        #endif
+        Logging.log?.trace(
+            "[ImageDownloader] Download complete: \(url.lastPathComponent)"
+        )
     }
 
     /// Logs a download error.
@@ -494,17 +494,17 @@ private extension ImageDownloader {
     ///   - error: The error that occurred.
     ///   - url: The URL that failed.
     func logDownloadError(_ error: ImageLoadingError, url: URL) {
-        #if DEBUG
-        print("[ImageDownloader] Download failed for \(url.lastPathComponent): \(error.localizedDescription)")
-        #endif
+        Logging.log?.error(
+            "[ImageDownloader] Download failed for \(url.lastPathComponent): \(error.localizedDescription)"
+        )
     }
 
     /// Logs when a request is deduplicated.
     ///
     /// - Parameter url: The URL being deduplicated.
     func logDeduplication(url: URL) {
-        #if DEBUG
-        print("[ImageDownloader] Deduplicating request for: \(url.lastPathComponent)")
-        #endif
+        Logging.log?.trace(
+            "[ImageDownloader] Deduplicating request for: \(url.lastPathComponent)"
+        )
     }
 }

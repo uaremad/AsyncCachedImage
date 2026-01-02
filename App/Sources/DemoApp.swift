@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -69,7 +69,8 @@ private extension DemoApp {
             revalidationThrottleInterval: 10,
             thumbnailMaxPixelSize: 300,
             memoryCacheCountLimit: 200,
-            memoryCacheSizeLimit: 150 * 1024 * 1024
+            memoryCacheSizeLimit: 150 * 1024 * 1024,
+            logLevel: .trace
         )
     }
 }

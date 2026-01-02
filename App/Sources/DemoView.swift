@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -390,7 +390,7 @@ private struct MetadataInfoView: View {
     private var noMetadataLabel: some View {
         Text("No metadata")
             .font(.caption2)
-            .foregroundStyle(.red)
+            .foregroundStyle(.secondary)
     }
 }
 

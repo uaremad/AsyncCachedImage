@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -74,9 +74,9 @@ enum CacheRevalidator {
     ///   - error: The error that occurred.
     ///   - url: The URL that failed revalidation.
     private static func logError(_ error: Error, url: URL) {
-        #if DEBUG
-        print("[CacheRevalidator] Error for \(url.lastPathComponent): \(error.localizedDescription)")
-        #endif
+        Logging.log?.error(
+            "[CacheRevalidator] Error for \(url.lastPathComponent): \(error.localizedDescription)"
+        )
     }
 }
 
@@ -238,14 +238,24 @@ private enum ResponseEvaluator {
     ///   - metadata: The cached metadata being used.
     ///   - response: The server response received.
     private static func logAttempt(url: URL, metadata: Metadata, response: HTTPURLResponse) {
-        #if DEBUG
-        print("[CacheRevalidator] Revalidating: \(url.lastPathComponent)")
-        print("[CacheRevalidator]   Sent ETag: \(metadata.etag ?? "none")")
-        print("[CacheRevalidator]   Sent Last-Modified: \(metadata.lastModified ?? "none")")
-        print("[CacheRevalidator]   Response Status: \(response.statusCode)")
-        print("[CacheRevalidator]   New ETag: \(response.value(forHTTPHeaderField: "ETag") ?? "none")")
-        print("[CacheRevalidator]   New Last-Modified: \(response.value(forHTTPHeaderField: "Last-Modified") ?? "none")")
-        #endif
+        Logging.log?.trace(
+            "[CacheRevalidator] Revalidating: \(url.lastPathComponent)"
+        )
+        Logging.log?.trace(
+            "[CacheRevalidator]   Sent ETag: \(metadata.etag ?? "none")"
+        )
+        Logging.log?.trace(
+            "[CacheRevalidator]   Sent Last-Modified: \(metadata.lastModified ?? "none")"
+        )
+        Logging.log?.trace(
+            "[CacheRevalidator]   Response Status: \(response.statusCode)"
+        )
+        Logging.log?.trace(
+            "[CacheRevalidator]   New ETag: \(response.value(forHTTPHeaderField: "ETag") ?? "none")"
+        )
+        Logging.log?.trace(
+            "[CacheRevalidator]   New Last-Modified: \(response.value(forHTTPHeaderField: "Last-Modified") ?? "none")"
+        )
     }
 
     /// Logs the revalidation result in debug builds.
@@ -255,10 +265,10 @@ private enum ResponseEvaluator {
     ///   - reason: A description of why this result was determined.
     ///   - url: The URL that was revalidated.
     private static func logResult(_ result: RevalidationResult, reason: String, url _: URL) {
-        #if DEBUG
         let status = result == .valid ? "VALID" : "INVALID"
-        print("[CacheRevalidator]   Result: \(status) (\(reason))")
-        #endif
+        Logging.log?.trace(
+            "[CacheRevalidator]   Result: \(status) (\(reason))"
+        )
     }
 }
 
@@ -286,10 +296,10 @@ private enum ETagComparator {
 
         let matches = oldETag == newETag
 
-        #if DEBUG
         let status = matches ? "VALID" : "INVALID"
-        print("[CacheRevalidator]   Result: \(status) (ETag)")
-        #endif
+        Logging.log?.trace(
+            "[CacheRevalidator]   Result: \(status) (ETag)"
+        )
 
         return matches ? .valid : .invalid
     }
@@ -319,10 +329,10 @@ private enum LastModifiedComparator {
 
         let matches = oldLastModified == newLastModified
 
-        #if DEBUG
         let status = matches ? "VALID" : "INVALID"
-        print("[CacheRevalidator]   Result: \(status) (Last-Modified)")
-        #endif
+        Logging.log?.trace(
+            "[CacheRevalidator]   Result: \(status) (Last-Modified)"
+        )
 
         return matches ? .valid : .invalid
     }

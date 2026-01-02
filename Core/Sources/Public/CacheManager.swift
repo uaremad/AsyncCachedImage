@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -187,8 +187,6 @@ public actor CacheManager {
     ///
     /// - Parameter type: A description of what was cleared.
     private func logCacheCleared(type: String) {
-        #if DEBUG
-        print("[CacheManager] \(type) cleared")
-        #endif
+        Logging.log?.trace("[CacheManager] \(type) cleared")
     }
 }

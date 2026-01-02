@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -178,9 +178,7 @@ public actor MetadataStore {
     ///   - fileURL: The URL where the metadata should be written.
     private func saveMetadata(_ metadata: Metadata, to fileURL: URL) {
         guard let data = try? JSONEncoder().encode(metadata) else {
-            #if DEBUG
-            print("[MetadataStore] Failed to encode metadata")
-            #endif
+            Logging.log?.error("[MetadataStore] Failed to encode metadata")
             return
         }
         try? data.write(to: fileURL)

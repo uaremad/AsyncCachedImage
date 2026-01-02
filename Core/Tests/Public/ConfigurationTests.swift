@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
@@ -191,6 +191,15 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertEqual(config.memoryCacheSizeLimit, expectedSize)
     }
 
+    /// Verifies default log level is none.
+    ///
+    /// Expected: logLevel is .none.
+    func testDefaultLogLevel() {
+        let config = Configuration()
+
+        XCTAssertEqual(config.logLevel, .none)
+    }
+
     // MARK: - Custom Initialization
 
     /// Verifies custom revalidation interval is stored.
@@ -238,6 +247,15 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertEqual(config.memoryCacheSizeLimit, 200 * 1024 * 1024)
     }
 
+    /// Verifies custom log level is stored.
+    ///
+    /// Expected: logLevel is .warn.
+    func testInitWithCustomLogLevel() {
+        let config = Configuration(logLevel: .warn)
+
+        XCTAssertEqual(config.logLevel, .warn)
+    }
+
     /// Verifies all custom values can be set together.
     ///
     /// Expected: All values are correctly stored.
@@ -247,7 +265,8 @@ final class ConfigurationTests: XCTestCase {
             revalidationThrottleInterval: 15,
             thumbnailMaxPixelSize: 500,
             memoryCacheCountLimit: 200,
-            memoryCacheSizeLimit: 150 * 1024 * 1024
+            memoryCacheSizeLimit: 150 * 1024 * 1024,
+            logLevel: .error
         )
 
         XCTAssertEqual(config.revalidationInterval, 120)
@@ -255,6 +274,7 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertEqual(config.thumbnailMaxPixelSize, 500)
         XCTAssertEqual(config.memoryCacheCountLimit, 200)
         XCTAssertEqual(config.memoryCacheSizeLimit, 150 * 1024 * 1024)
+        XCTAssertEqual(config.logLevel, .error)
     }
 
     // MARK: - Defaults Constants
@@ -293,6 +313,13 @@ final class ConfigurationTests: XCTestCase {
     func testDefaultsMemoryCacheSizeLimit() {
         let expectedSize = 100 * 1024 * 1024
         XCTAssertEqual(Configuration.Defaults.memoryCacheSizeLimit, expectedSize)
+    }
+
+    /// Verifies Defaults.logLevel constant.
+    ///
+    /// Expected: Value is .none.
+    func testDefaultsLogLevel() {
+        XCTAssertEqual(Configuration.Defaults.logLevel, .none)
     }
 
     // MARK: - Protocol Conformance
