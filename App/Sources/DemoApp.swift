@@ -69,7 +69,8 @@ private extension DemoApp {
             revalidationThrottleInterval: 10,
             thumbnailMaxPixelSize: 300,
             memoryCacheCountLimit: 200,
-            memoryCacheSizeLimit: 150 * 1024 * 1024
+            memoryCacheSizeLimit: 150 * 1024 * 1024,
+            logLevel: .trace
         )
     }
 }

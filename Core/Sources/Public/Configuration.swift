@@ -26,7 +26,8 @@ import Foundation
 /// AsyncCachedImageConfiguration.shared = Configuration(
 ///     revalidationInterval: 60,
 ///     revalidationThrottleInterval: 10,
-///     thumbnailMaxPixelSize: 300
+///     thumbnailMaxPixelSize: 300,
+///     logLevel: .trace
 /// )
 /// ```
 ///
@@ -42,7 +43,11 @@ public struct Configuration: Sendable {
     /// Modify this at app launch to set default behavior.
     /// Thread-safe via MainActor isolation.
     @MainActor
-    public static var shared = Configuration()
+    public static var shared = Configuration() {
+        didSet {
+            Logging.setLogLevel(shared.logLevel)
+        }
+    }
 
     // MARK: - Revalidation Settings
 
@@ -91,6 +96,16 @@ public struct Configuration: Sendable {
     /// - Default: 100 MB (100 * 1024 * 1024)
     public var memoryCacheSizeLimit: Int
 
+    /// Global log verbosity for AsyncCachedImage.
+    ///
+    /// Set to `.none` to disable logging.
+    /// - Default: `.none`
+    public var logLevel: LogLevel {
+        didSet {
+            Logging.setLogLevel(logLevel)
+        }
+    }
+
     // MARK: - Initialization
 
     /// Creates a new configuration with the specified settings.
@@ -101,18 +116,21 @@ public struct Configuration: Sendable {
     ///   - thumbnailMaxPixelSize: Maximum pixel size for thumbnails. Default: 400
     ///   - memoryCacheCountLimit: Maximum decoded images in memory. Default: 150
     ///   - memoryCacheSizeLimit: Maximum memory for decoded images in bytes. Default: 100 MB
+    ///   - logLevel: Global log level for AsyncCachedImage. Default: `.none`
     public init(
         revalidationInterval: TimeInterval = Defaults.revalidationInterval,
         revalidationThrottleInterval: TimeInterval = Defaults.revalidationThrottleInterval,
         thumbnailMaxPixelSize: Int = Defaults.thumbnailMaxPixelSize,
         memoryCacheCountLimit: Int = Defaults.memoryCacheCountLimit,
-        memoryCacheSizeLimit: Int = Defaults.memoryCacheSizeLimit
+        memoryCacheSizeLimit: Int = Defaults.memoryCacheSizeLimit,
+        logLevel: LogLevel = Defaults.logLevel
     ) {
         self.revalidationInterval = revalidationInterval
         self.revalidationThrottleInterval = revalidationThrottleInterval
         self.thumbnailMaxPixelSize = thumbnailMaxPixelSize
         self.memoryCacheCountLimit = memoryCacheCountLimit
         self.memoryCacheSizeLimit = memoryCacheSizeLimit
+        self.logLevel = logLevel
     }
 
     // MARK: - Defaults
@@ -135,6 +153,9 @@ public struct Configuration: Sendable {
 
         /// Default memory cache size limit: 100 MB.
         public static let memoryCacheSizeLimit: Int = 100 * 1024 * 1024
+
+        /// Default log level: none.
+        public static let logLevel: LogLevel = .none
     }
 }
 

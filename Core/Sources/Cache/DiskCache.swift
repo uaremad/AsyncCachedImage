@@ -180,19 +180,19 @@ actor DiskCache {
     ///   - url: The URL that was not cached.
     ///   - response: The error response.
     private func logSkippedCaching(url: URL, response: URLResponse) {
-        #if DEBUG
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-        print("[DiskCache] Skipped caching error response (HTTP \(statusCode)): \(url.lastPathComponent)")
-        #endif
+        Logging.log?.warn(
+            "[DiskCache] Skipped caching error response (HTTP \(statusCode)): \(url.lastPathComponent)"
+        )
     }
 
     /// Logs when an invalid cached response is removed.
     ///
     /// - Parameter url: The URL of the removed cache entry.
     private func logRemovedInvalidCache(url: URL) {
-        #if DEBUG
-        print("[DiskCache] Removed cached error response: \(url.lastPathComponent)")
-        #endif
+        Logging.log?.trace(
+            "[DiskCache] Removed cached error response: \(url.lastPathComponent)"
+        )
     }
 }
 

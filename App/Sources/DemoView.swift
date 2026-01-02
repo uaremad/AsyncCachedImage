@@ -390,7 +390,7 @@ private struct MetadataInfoView: View {
     private var noMetadataLabel: some View {
         Text("No metadata")
             .font(.caption2)
-            .foregroundStyle(.red)
+            .foregroundStyle(.secondary)
     }
 }
 
