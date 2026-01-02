@@ -17,15 +17,15 @@ import Foundation
 public protocol LogProtocol {
     var level: LogLevel { get }
 
-    func trace<T>(_ message: @autoclosure () -> T, filename: String, line: Int, function: String)
-    func warn<T>(_ message: @autoclosure () -> T, filename: String, line: Int, function: String)
-    func error<T>(_ message: @autoclosure () -> T, filename: String, line: Int, function: String)
+    func trace(_ message: @autoclosure () -> Any, filename: String, line: Int, function: String)
+    func warn(_ message: @autoclosure () -> Any, filename: String, line: Int, function: String)
+    func error(_ message: @autoclosure () -> Any, filename: String, line: Int, function: String)
 }
 
 public extension LogProtocol {
     /// Logs a verbose diagnostic message.
     func trace(
-        _ message: @autoclosure () -> some Any,
+        _ message: @autoclosure () -> Any,
         filename: String = #file,
         line: Int = #line,
         function _: String = #function
@@ -38,7 +38,7 @@ public extension LogProtocol {
 
     /// Logs a warning that should be visible for debugging.
     func warn(
-        _ message: @autoclosure () -> some Any,
+        _ message: @autoclosure () -> Any,
         filename: String = #file,
         line: Int = #line,
         function _: String = #function
@@ -51,7 +51,7 @@ public extension LogProtocol {
 
     /// Logs an error that should be visible in production diagnostics.
     func error(
-        _ message: @autoclosure () -> some Any,
+        _ message: @autoclosure () -> Any,
         filename: String = #file,
         line: Int = #line,
         function _: String = #function
