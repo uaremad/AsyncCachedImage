@@ -416,7 +416,9 @@ final class InternalPhaseTests: XCTestCase {
     #if os(iOS)
     private func createUIImage(width: Int, height: Int) -> UIImage {
         let size = CGSize(width: width, height: height)
-        let renderer = UIGraphicsImageRenderer(size: size)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
         return renderer.image { context in
             UIColor.blue.setFill()
             context.fill(CGRect(origin: .zero, size: size))

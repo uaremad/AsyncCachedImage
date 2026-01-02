@@ -122,6 +122,39 @@ final class RevalidationErrorTests: XCTestCase {
         }
     }
 
+    // MARK: - Localized Description
+
+    /// Verifies .invalidResponse has a user-facing description.
+    ///
+    /// Expected: Description matches the defined string.
+    func testInvalidResponseLocalizedDescription() {
+        let error = RevalidationError.invalidResponse
+        XCTAssertEqual(
+            error.localizedDescription,
+            "Invalid server response during revalidation"
+        )
+    }
+
+    /// Verifies .networkFailure uses the provided message.
+    ///
+    /// Expected: Description equals the message.
+    func testNetworkFailureLocalizedDescriptionUsesMessage() {
+        let message = "Connection timeout"
+        let error = RevalidationError.networkFailure(message)
+        XCTAssertEqual(error.localizedDescription, message)
+    }
+
+    /// Verifies .networkFailure falls back when message is empty.
+    ///
+    /// Expected: Description uses the default fallback string.
+    func testNetworkFailureLocalizedDescriptionEmptyFallback() {
+        let error = RevalidationError.networkFailure("")
+        XCTAssertEqual(
+            error.localizedDescription,
+            "Network error during revalidation"
+        )
+    }
+
     // MARK: - Equality
 
     /// Verifies .invalidResponse equals itself.

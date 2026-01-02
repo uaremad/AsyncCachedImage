@@ -462,12 +462,15 @@ private extension AsyncCachedImage {
     ///   - url: The URL to revalidate.
     ///   - metadata: The cached metadata to use for conditional headers.
     func performRevalidation(for url: URL, metadata: Metadata) async {
-        let isStillValid = await CacheRevalidator.revalidate(for: url, metadata: metadata)
+        let result = await CacheRevalidator.revalidate(for: url, metadata: metadata)
 
-        if isStillValid {
+        switch result {
+        case .valid:
             await refreshMetadataTimestamp(for: url, metadata: metadata)
-        } else {
+        case .invalid:
             await invalidateAndReload(url: url)
+        case let .error(error):
+            handleRevalidationError(error, url: url)
         }
     }
 
@@ -501,6 +504,21 @@ private extension AsyncCachedImage {
         if let image = outcome.image {
             updatePhase(.success(image))
         }
+    }
+
+    /// Reports revalidation errors without changing the current phase.
+    ///
+    /// - Parameters:
+    ///   - error: The revalidation error to report.
+    ///   - url: The URL that failed to revalidate.
+    func handleRevalidationError(_ error: RevalidationError, url: URL) {
+        let loadingError: ImageLoadingError = switch error {
+        case .invalidResponse:
+            .invalidResponse(url: url)
+        case .networkFailure:
+            .networkError(url: url, underlyingError: error)
+        }
+        handleError(loadingError)
     }
 }
 

@@ -21,7 +21,7 @@ import Foundation
 /// 1. Sends a HEAD request with If-None-Match (ETag) and If-Modified-Since headers
 /// 2. If server returns 304 Not Modified, the cache is valid
 /// 3. If server returns 200 OK, compares headers to determine validity
-/// 4. On network errors, assumes cache is valid to avoid unnecessary failures
+/// 4. On network errors, returns `.error` so callers can decide how to react
 enum CacheRevalidator {
     // MARK: - Public API
 
@@ -33,19 +33,18 @@ enum CacheRevalidator {
     /// - Parameters:
     ///   - url: The resource URL to revalidate.
     ///   - metadata: The stored cache metadata containing ETag or Last-Modified values.
-    /// - Returns: True if the cached resource is still valid, false if it needs refresh.
-    ///
-    /// - Note: Returns true on network errors to prevent unnecessary cache invalidation.
-    static func revalidate(for url: URL, metadata: Metadata) async -> Bool {
+    /// - Returns: The revalidation result indicating validity or error.
+    static func revalidate(for url: URL, metadata: Metadata) async -> RevalidationResult {
         let request = ConditionalRequestBuilder.build(for: url, metadata: metadata)
 
         do {
             let response = try await performHeadRequest(request)
             let result = ResponseEvaluator.evaluate(response, against: metadata, url: url)
-            return result == .valid
+            return result
         } catch {
-            logError(error, url: url)
-            return true
+            let revalidationError = mapError(error)
+            logError(revalidationError, url: url)
+            return .error(revalidationError)
         }
     }
 
@@ -78,6 +77,17 @@ enum CacheRevalidator {
             "[CacheRevalidator] Error for \(url.lastPathComponent): \(error.localizedDescription)"
         )
     }
+
+    /// Maps generic errors to RevalidationError for consistent handling.
+    ///
+    /// - Parameter error: The error to map.
+    /// - Returns: A RevalidationError with a useful description.
+    private static func mapError(_ error: Error) -> RevalidationError {
+        if let revalidationError = error as? RevalidationError {
+            return revalidationError
+        }
+        return .networkFailure(error.localizedDescription)
+    }
 }
 
 // MARK: - RevalidationResult
@@ -91,7 +101,7 @@ enum RevalidationResult: Sendable {
     case invalid
 
     /// An error occurred during revalidation.
-    case error
+    case error(RevalidationError)
 }
 
 // MARK: - ConditionalRequestBuilder
@@ -265,7 +275,14 @@ private enum ResponseEvaluator {
     ///   - reason: A description of why this result was determined.
     ///   - url: The URL that was revalidated.
     private static func logResult(_ result: RevalidationResult, reason: String, url _: URL) {
-        let status = result == .valid ? "VALID" : "INVALID"
+        let status = switch result {
+        case .valid:
+            "VALID"
+        case .invalid:
+            "INVALID"
+        case .error:
+            "ERROR"
+        }
         Logging.log?.trace(
             "[CacheRevalidator]   Result: \(status) (\(reason))"
         )

@@ -12,7 +12,7 @@ Documentation/
 │   │   └── *.md
 │   ├── 2025.11.1/            ← Initial release
 │   │   └── initial-release.md
-│   └── 2025.x.x/             ← Future releases
+│   └── xxxx.x.x/             ← Future releases
 │       └── *.md
 ├── architecture/             ← Design documents (optional)
 │   └── *.md
