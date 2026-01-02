@@ -1,7 +1,7 @@
 //
 //  AsyncCachedImage
 //
-//  Copyright © 2025 Jan-Hendrik Damerau.
+//  Copyright © 2026 Jan-Hendrik Damerau.
 //  https://github.com/uaremad/AsyncCachedImage
 //
 //  Licensed under the MIT License
