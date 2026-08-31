@@ -228,7 +228,9 @@ extension UIImage {
     /// Returns the underlying CGImage representation.
     ///
     /// Provides a unified API across platforms for accessing the CGImage.
-    var cgImageRepresentation: CGImage? { cgImage }
+    var cgImageRepresentation: CGImage? {
+        cgImage
+    }
 }
 #endif
 

@@ -64,7 +64,7 @@ final class MemoryCacheTests: XCTestCase {
     /// Verifies the singleton pattern is implemented correctly.
     ///
     /// Expected: MemoryCache.shared returns a non-nil instance.
-    func testSharedInstanceExists() async {
+    func testSharedInstanceExists() {
         let cache = MemoryCache.shared
         XCTAssertNotNil(cache)
     }

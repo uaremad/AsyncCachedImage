@@ -82,8 +82,25 @@ public struct AsyncCachedImage<Content: View>: View {
     /// Initialized from memory cache synchronously to prevent flicker.
     @State private var phase: InternalPhase
 
+    /// The URL that `phase`'s current `.success` image was loaded for, if any.
+    ///
+    /// Lets `loadFromCacheOrNetwork()` tell a stale `.success` (left over from a
+    /// previous `url`) apart from an up-to-date one, so a URL change can be detected
+    /// and reloaded even while the view is still showing an old, unrelated image.
+    @State private var loadedURL: URL?
+
+    /// The URL currently represented by the live SwiftUI view identity.
+    ///
+    /// Async loading work may resume from an older view value after SwiftUI has
+    /// already re-rendered this component for a different `url`. This state is
+    /// updated by `.task(id: url)` and used to discard stale async results.
+    @State private var activeURL: URL?
+
     /// The timestamp of the last revalidation attempt.
     @State private var lastRevalidation: Date?
+
+    /// Incremented when the app becomes active and the current image should revalidate.
+    @State private var revalidationRequestID = 0
 
     /// Per-image loading options from the environment.
     @Environment(\.imageLoadingOptions) private var loadingOptions
@@ -122,20 +139,26 @@ public struct AsyncCachedImage<Content: View>: View {
         // Initialize phase from memory cache synchronously to prevent flicker
         let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
         _phase = State(initialValue: initialPhase)
+        _loadedURL = State(initialValue: Self.resolveInitialLoadedURL(phase: initialPhase, url: url))
+        _activeURL = State(initialValue: url)
     }
 
     /// The view body that renders the current phase.
     public var body: some View {
         content(phase.toPublicPhase(scale: scale))
             .task(id: url) {
-                await loadFromCacheOrNetwork()
+                activeURL = url
+                await loadFromCacheOrNetwork(for: url)
+                await revalidateIfNeeded(for: url)
             }
-            .onAppear {
-                Task {
-                    await revalidateIfNeeded()
-                }
+            .modifier(ScenePhaseObserver {
+                activeURL = url
+                revalidationRequestID += 1
+            })
+            .task(id: revalidationRequestID) {
+                guard revalidationRequestID > 0 else { return }
+                await revalidateIfNeeded(for: activeURL)
             }
-            .modifier(ScenePhaseObserver(onBecameActive: revalidateIfNeeded))
             .onChange(of: phase) { oldPhase, newPhase in
                 guard oldPhase != newPhase else { return }
                 applyTransaction()
@@ -161,6 +184,19 @@ public struct AsyncCachedImage<Content: View>: View {
         }
 
         return .empty
+    }
+
+    /// Resolves the URL that the initial phase's image (if any) was loaded for.
+    ///
+    /// - Parameters:
+    ///   - phase: The initial phase resolved by `resolveInitialPhase(url:asThumbnail:)`.
+    ///   - url: The URL passed to this view.
+    /// - Returns: `url` if `phase` is `.success`, otherwise `nil`.
+    private static func resolveInitialLoadedURL(phase: InternalPhase, url: URL?) -> URL? {
+        if case .success = phase {
+            return url
+        }
+        return nil
     }
 
     /// Applies the transaction animation if configured.
@@ -229,6 +265,8 @@ public extension AsyncCachedImage where Content == AnyView {
         // Initialize phase from memory cache synchronously to prevent flicker
         let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
         _phase = State(initialValue: initialPhase)
+        _loadedURL = State(initialValue: Self.resolveInitialLoadedURL(phase: initialPhase, url: url))
+        _activeURL = State(initialValue: url)
     }
 }
 
@@ -276,6 +314,8 @@ public extension AsyncCachedImage where Content == AnyView {
         // Initialize phase from memory cache synchronously to prevent flicker
         let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
         _phase = State(initialValue: initialPhase)
+        _loadedURL = State(initialValue: Self.resolveInitialLoadedURL(phase: initialPhase, url: url))
+        _activeURL = State(initialValue: url)
     }
 }
 
@@ -323,6 +363,8 @@ public extension AsyncCachedImage where Content == AnyView {
         // Initialize phase from memory cache synchronously to prevent flicker
         let initialPhase = Self.resolveInitialPhase(url: url, asThumbnail: asThumbnail)
         _phase = State(initialValue: initialPhase)
+        _loadedURL = State(initialValue: Self.resolveInitialLoadedURL(phase: initialPhase, url: url))
+        _activeURL = State(initialValue: url)
     }
 }
 
@@ -332,28 +374,75 @@ private extension AsyncCachedImage {
     /// Loads the image from cache or network as needed.
     ///
     /// This method handles the complete loading flow:
-    /// 1. If already loaded (from sync init), skip
-    /// 2. Check disk cache if not in memory
-    /// 3. Load from network if not cached
-    func loadFromCacheOrNetwork() async {
-        // Already loaded from memory cache in init
-        guard case .empty = phase else { return }
-
-        guard let url else {
+    /// 1. Skip if we already have a successful load for this exact URL
+    /// 2. Check the memory cache
+    /// 3. Check the disk cache
+    /// 4. Load from network if not cached
+    ///
+    /// Deliberately does not reset `phase` to `.empty` before checking these, so that
+    /// when `url` changes while a previous image is already showing, that image stays
+    /// on screen until the new one is ready instead of flickering to a placeholder.
+    func loadFromCacheOrNetwork(for requestedURL: URL?) async {
+        switch AsyncCachedImageLoadPolicy.decision(
+            for: requestedURL,
+            phase: phase,
+            loadedURL: loadedURL
+        ) {
+        case .skip:
+            return
+        case .missingURL:
+            loadedURL = nil
             let error = ImageLoadingError.missingURL
             handleError(error)
             updatePhase(.failure(error))
+            return
+        case let .load(url):
+            await loadImage(for: url)
+        }
+    }
+
+    /// Performs cache and network lookup for a non-nil URL.
+    ///
+    /// - Parameter url: The URL to load.
+    func loadImage(for url: URL) async {
+        // The memory cache may have been populated (by this or another instance)
+        // since the synchronous check in `resolveInitialPhase(url:asThumbnail:)`.
+        if let cachedImage = MemoryCacheStorage.shared.image(for: url, thumb: asThumbnail) {
+            loadedURL = url
+            updatePhase(.success(cachedImage))
             return
         }
 
         // Try disk cache before network
         if let diskImage = await loadFromDiskCache(url: url) {
+            // `DiskCache` is a plain actor call, so `.task(id:)` cancellation should
+            // propagate through this suspension cleanly. Re-validate against the
+            // current `url` anyway rather than relying on cancellation timing: by the
+            // time this line runs after resuming, a newer load may already be in
+            // flight (or have completed) for a different `url`.
+            guard isRequestStillCurrent(for: url) else { return }
+            loadedURL = url
             updatePhase(.success(diskImage))
             return
         }
 
         // Load from network
         await loadFromNetwork(url: url)
+    }
+
+    /// Whether a load started for `requestedURL` is still relevant.
+    ///
+    /// Call this after every `await` in the loading path before touching
+    /// `phase`/`loadedURL`. This matters most for `ImageDownloader`, which performs
+    /// the network request on its own unstructured task internally, so cancelling
+    /// this view's `.task(id:)` doesn't necessarily stop it. But re-checking `url`
+    /// is worth doing after any suspension, cancellation-propagation aside: it's the
+    /// actual state a slow, superseded request could otherwise clobber.
+    ///
+    /// - Parameter requestedURL: The URL the just-awaited load was started for.
+    /// - Returns: `false` if this task was cancelled or `url` has since changed.
+    func isRequestStillCurrent(for requestedURL: URL) -> Bool {
+        !Task.isCancelled && activeURL == requestedURL
     }
 
     /// Loads an image from the disk cache.
@@ -375,12 +464,19 @@ private extension AsyncCachedImage {
             ignoreCache: ignoreCache
         )
 
+        // `url` may have changed again while the download above was awaiting; discard
+        // a now-stale result rather than overwriting a newer, in-flight one.
+        guard isRequestStillCurrent(for: url) else { return }
+
         if let image = outcome.image {
+            loadedURL = url
             updatePhase(.success(image))
         } else if let error = outcome.error {
+            loadedURL = nil
             handleError(error)
             updatePhase(.failure(error))
         } else {
+            loadedURL = nil
             let error = ImageLoadingError.decodingFailed(url: url)
             handleError(error)
             updatePhase(.failure(error))
@@ -419,9 +515,10 @@ private extension AsyncCachedImage {
     /// - Revalidation is not skipped via options
     /// - The throttle interval has passed
     /// - The metadata contains ETag or Last-Modified headers
-    func revalidateIfNeeded() async {
-        guard let url else { return }
+    func revalidateIfNeeded(for requestedURL: URL?) async {
+        guard let url = requestedURL else { return }
         guard case .success = phase else { return }
+        guard loadedURL == url else { return }
 
         if loadingOptions.skipRevalidation {
             return
@@ -433,6 +530,7 @@ private extension AsyncCachedImage {
         }
 
         guard let metadata = await loadMetadata(for: url) else { return }
+        guard isRequestStillCurrent(for: url) else { return }
         guard metadata.etag != nil || metadata.lastModified != nil else { return }
 
         lastRevalidation = Date()
@@ -463,6 +561,7 @@ private extension AsyncCachedImage {
     ///   - metadata: The cached metadata to use for conditional headers.
     func performRevalidation(for url: URL, metadata: Metadata) async {
         let result = await CacheRevalidator.revalidate(for: url, metadata: metadata)
+        guard isRequestStillCurrent(for: url) else { return }
 
         switch result {
         case .valid:
@@ -480,6 +579,8 @@ private extension AsyncCachedImage {
     ///   - url: The URL to update.
     ///   - metadata: The existing metadata to preserve.
     func refreshMetadataTimestamp(for url: URL, metadata: Metadata) async {
+        guard isRequestStillCurrent(for: url) else { return }
+
         let refreshedMetadata = Metadata(
             etag: metadata.etag,
             lastModified: metadata.lastModified,
@@ -492,8 +593,13 @@ private extension AsyncCachedImage {
     ///
     /// - Parameter url: The URL to reload.
     func invalidateAndReload(url: URL) async {
+        guard isRequestStillCurrent(for: url) else { return }
+
         await MemoryCache.shared.remove(for: url, thumb: asThumbnail)
+        guard isRequestStillCurrent(for: url) else { return }
+
         await MetadataStore.shared.remove(for: url, thumb: asThumbnail)
+        guard isRequestStillCurrent(for: url) else { return }
 
         let outcome = await ImageDownloader.shared.downloadWithResult(
             from: url,
@@ -501,7 +607,12 @@ private extension AsyncCachedImage {
             ignoreCache: true
         )
 
+        // `url` may have changed since revalidation for this URL started; discard a
+        // now-stale result rather than overwriting a newer, in-flight one.
+        guard isRequestStillCurrent(for: url) else { return }
+
         if let image = outcome.image {
+            loadedURL = url
             updatePhase(.success(image))
         }
     }

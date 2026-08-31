@@ -196,7 +196,7 @@ final class ImageDownloaderTests: XCTestCase {
     /// Verifies shared singleton instance exists.
     ///
     /// Expected: ImageDownloader.shared is not nil.
-    func testSharedInstanceExists() async {
+    func testSharedInstanceExists() {
         let downloader = ImageDownloader.shared
 
         XCTAssertNotNil(downloader)
@@ -367,7 +367,7 @@ final class ImageDownloaderTests: XCTestCase {
     /// blocking the main thread during CPU-intensive decoding.
     ///
     /// Expected: Returns a decoded image.
-    func testDecodeImageDataWithValidPNG() async throws {
+    func testDecodeImageDataWithValidPNG() throws {
         let pngData = createValidPNGData(width: 100, height: 100)
 
         let image = try ImageDownloader.shared.decodeImageData(
@@ -382,7 +382,7 @@ final class ImageDownloaderTests: XCTestCase {
     /// Tests decoding empty data throws error.
     ///
     /// Expected: Throws InternalDownloadError.
-    func testDecodeImageDataWithEmptyDataThrows() async {
+    func testDecodeImageDataWithEmptyDataThrows() {
         let emptyData = Data()
 
         XCTAssertThrowsError(
@@ -401,7 +401,7 @@ final class ImageDownloaderTests: XCTestCase {
     /// Random bytes cannot be decoded as an image.
     ///
     /// Expected: Throws InternalDownloadError.
-    func testDecodeImageDataWithInvalidDataThrows() async {
+    func testDecodeImageDataWithInvalidDataThrows() {
         let invalidData = Data([0x00, 0x01, 0x02])
 
         XCTAssertThrowsError(

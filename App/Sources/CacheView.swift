@@ -341,13 +341,12 @@ private struct MetadataDetailsView: View {
     }
 
     /// Section displaying the full URL.
+    @ViewBuilder
     private var urlSection: some View {
-        Group {
-            Text("URL:")
-                .fontWeight(.medium)
-            Text(entry.url.absoluteString)
-                .foregroundStyle(.secondary)
-        }
+        Text("URL:")
+            .fontWeight(.medium)
+        Text(entry.url.absoluteString)
+            .foregroundStyle(.secondary)
     }
 
     /// Section displaying the ETag if available.

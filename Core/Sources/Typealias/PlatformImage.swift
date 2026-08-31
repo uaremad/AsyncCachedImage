@@ -29,18 +29,4 @@ import AppKit
 /// Used internally for caching and decoding operations.
 public typealias PlatformImage = NSImage
 
-// MARK: - NSImage Sendable Conformance
-
-// NSImage must be Sendable to be used in Sendable structs/enums like
-// DownloadOutcome and InternalPhase. This retroactive conformance is
-// safe because NSImage is immutable after creation in our usage pattern.
-//
-// The warning about Apple potentially adding this conformance in the future
-// is suppressed because: if Apple adds it, we can simply remove this extension.
-#if swift(>=6.0)
-extension NSImage: @retroactive @unchecked Sendable {}
-#else
-extension NSImage: @unchecked Sendable {}
-#endif
-
 #endif
