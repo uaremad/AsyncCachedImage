@@ -10,38 +10,18 @@
 
 import SwiftUI
 
-// MARK: - ImageLoadingOptions Environment Key
-
-/// Environment key for passing ImageLoadingOptions through the view hierarchy.
-private struct ImageLoadingOptionsKey: EnvironmentKey {
-    static let defaultValue: ImageLoadingOptions = .default
-}
-
-// MARK: - ImageErrorHandler Environment Key
-
-/// Environment key for passing error handler through the view hierarchy.
-private struct ImageErrorHandlerKey: EnvironmentKey {
-    static let defaultValue: (@Sendable (ImageLoadingError) -> Void)? = nil
-}
-
 // MARK: - Environment Values Extension
 
 public extension EnvironmentValues {
     /// The image loading options for AsyncCachedImage views.
     ///
     /// Use the `.imageConfiguration(_:)` modifier to set this value.
-    var imageLoadingOptions: ImageLoadingOptions {
-        get { self[ImageLoadingOptionsKey.self] }
-        set { self[ImageLoadingOptionsKey.self] = newValue }
-    }
+    @Entry var imageLoadingOptions: ImageLoadingOptions = .default
 
     /// The error handler for AsyncCachedImage views.
     ///
     /// Use the `.onImageError(_:)` modifier to set this value.
-    var imageErrorHandler: (@Sendable (ImageLoadingError) -> Void)? {
-        get { self[ImageErrorHandlerKey.self] }
-        set { self[ImageErrorHandlerKey.self] = newValue }
-    }
+    @Entry var imageErrorHandler: (@Sendable (ImageLoadingError) -> Void)?
 }
 
 // MARK: - View Modifiers

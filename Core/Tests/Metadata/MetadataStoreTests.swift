@@ -58,7 +58,7 @@ final class MetadataStoreTests: XCTestCase {
     /// Verifies shared singleton instance exists.
     ///
     /// Expected: MetadataStore.shared is not nil.
-    func testSharedInstanceExists() async {
+    func testSharedInstanceExists() {
         let store = MetadataStore.shared
         XCTAssertNotNil(store)
     }

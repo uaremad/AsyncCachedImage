@@ -21,13 +21,11 @@ import SwiftUI
 ///
 /// ```swift
 /// content
-///     .modifier(ScenePhaseObserver(onBecameActive: revalidateIfNeeded))
+///     .modifier(ScenePhaseObserver(onBecameActive: requestRevalidation))
 /// ```
 struct ScenePhaseObserver: ViewModifier {
     /// Callback executed when the app transitions to the active state.
-    ///
-    /// Marked as `@Sendable` to ensure thread safety when called from async context.
-    let onBecameActive: @Sendable () async -> Void
+    let onBecameActive: @MainActor () -> Void
 
     /// The current scene phase from the environment.
     @Environment(\.scenePhase) private var scenePhase
@@ -36,9 +34,7 @@ struct ScenePhaseObserver: ViewModifier {
         content
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
-                    Task {
-                        await onBecameActive()
-                    }
+                    onBecameActive()
                 }
             }
     }

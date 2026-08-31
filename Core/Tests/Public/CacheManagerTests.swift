@@ -69,7 +69,7 @@ final class CacheManagerTests: XCTestCase {
     /// Verifies shared singleton instance exists.
     ///
     /// Expected: CacheManager.shared is not nil.
-    func testSharedInstanceExists() async {
+    func testSharedInstanceExists() {
         let manager = CacheManager.shared
 
         XCTAssertNotNil(manager)

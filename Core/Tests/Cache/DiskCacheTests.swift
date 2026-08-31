@@ -58,7 +58,7 @@ final class DiskCacheTests: XCTestCase {
     /// Verifies the singleton pattern is implemented correctly.
     ///
     /// Expected: DiskCache.shared returns a non-nil instance.
-    func testSharedInstanceExists() async {
+    func testSharedInstanceExists() {
         let cache = DiskCache.shared
         XCTAssertNotNil(cache)
     }

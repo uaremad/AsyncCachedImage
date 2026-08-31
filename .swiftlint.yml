@@ -67,7 +67,7 @@ identifier_name:
     - x
     - y
     - z
-redundant_optional_initialization:
+implicit_optional_initialization:
   severity: error
 force_unwrapping:
   severity: error
@@ -90,6 +90,7 @@ file_name:
     - Package.swift
     - Assets.swift
     - Dangerfile.swift
+    - ImageLoadingEnvironment.swift
 line_length:
   warning: 150
   error: 300

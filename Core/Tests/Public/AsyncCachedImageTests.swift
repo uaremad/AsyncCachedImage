@@ -342,6 +342,100 @@ final class AsyncCachedImageTests: XCTestCase {
 
         XCTAssertNotNil(view)
     }
+
+    // MARK: - URL Change Loading
+
+    /// Verifies an existing success for another URL does not suppress a new load.
+    ///
+    /// This covers SwiftUI view reuse where the same AsyncCachedImage instance
+    /// keeps showing a previous image while its `url` input changes.
+    ///
+    /// Expected: Loader decides to load the alternate URL.
+    func testURLChangeAfterSuccessTriggersNewLoad() {
+        let image = createTestImage(width: 100, height: 100)
+        let decision = AsyncCachedImageLoadPolicy.decision(
+            for: alternateURL,
+            phase: .success(image),
+            loadedURL: testURL
+        )
+
+        XCTAssertEqual(decision, .load(alternateURL))
+    }
+
+    /// Verifies a success for the same URL can still skip duplicate loading.
+    ///
+    /// Expected: Loader skips because the current success belongs to the requested URL.
+    func testSameURLAfterSuccessSkipsDuplicateLoad() {
+        let image = createTestImage(width: 100, height: 100)
+        let decision = AsyncCachedImageLoadPolicy.decision(
+            for: testURL,
+            phase: .success(image),
+            loadedURL: testURL
+        )
+
+        XCTAssertEqual(decision, .skip)
+    }
+
+    /// Verifies a stale loadedURL alone does not suppress retrying after failure.
+    ///
+    /// Expected: Loader retries the requested URL because the phase is not success.
+    func testFailureWithMatchingLoadedURLStillLoads() {
+        let decision = AsyncCachedImageLoadPolicy.decision(
+            for: testURL,
+            phase: .failure(.networkError(url: testURL, underlyingError: URLError(.timedOut))),
+            loadedURL: testURL
+        )
+
+        XCTAssertEqual(decision, .load(testURL))
+    }
+
+    /// Verifies nil URL still resolves to the missing URL path.
+    ///
+    /// Expected: Loader reports the missing URL decision.
+    func testNilURLResolvesToMissingURLDecision() {
+        let decision = AsyncCachedImageLoadPolicy.decision(
+            for: nil,
+            phase: .empty,
+            loadedURL: nil
+        )
+
+        XCTAssertEqual(decision, .missingURL)
+    }
+
+    // MARK: - Helper Methods
+
+    private func createTestImage(width: Int, height: Int) -> PlatformImage {
+        #if os(iOS)
+        return createUIImage(width: width, height: height)
+        #elseif os(macOS)
+        return createNSImage(width: width, height: height)
+        #endif
+    }
+
+    #if os(iOS)
+    private func createUIImage(width: Int, height: Int) -> UIImage {
+        let size = CGSize(width: width, height: height)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        return renderer.image { context in
+            UIColor.blue.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
+    }
+    #endif
+
+    #if os(macOS)
+    private func createNSImage(width: Int, height: Int) -> NSImage {
+        let size = NSSize(width: width, height: height)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        NSColor.blue.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        image.unlockFocus()
+        return image
+    }
+    #endif
 }
 
 // MARK: - PlatformImageConverterTests

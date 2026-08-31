@@ -39,8 +39,7 @@ enum CacheRevalidator {
 
         do {
             let response = try await performHeadRequest(request)
-            let result = ResponseEvaluator.evaluate(response, against: metadata, url: url)
-            return result
+            return ResponseEvaluator.evaluate(response, against: metadata, url: url)
         } catch {
             let revalidationError = mapError(error)
             logError(revalidationError, url: url)

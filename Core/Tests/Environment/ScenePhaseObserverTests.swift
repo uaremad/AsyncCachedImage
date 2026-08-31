@@ -34,7 +34,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     func testInitWithCallback() {
         nonisolated(unsafe) var callbackExecuted = false
 
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             callbackExecuted = true
         }
 
@@ -46,7 +46,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Observer is created successfully.
     func testInitWithEmptyCallback() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -61,7 +61,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Can be assigned to any ViewModifier type.
     func testConformsToViewModifierProtocol() {
-        let observer: any ViewModifier = ScenePhaseObserver { @Sendable in
+        let observer: any ViewModifier = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -76,7 +76,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Returns a modified view.
     func testBodyReturnsModifiedContent() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -92,7 +92,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Modified view is created successfully.
     func testCanBeAppliedToTextView() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -105,7 +105,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Modified view is created successfully.
     func testCanBeAppliedToColorView() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -118,7 +118,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Modified view is created successfully.
     func testCanBeAppliedToEmptyView() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -131,7 +131,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Modified view is created successfully.
     func testCanBeAppliedToImageView() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -146,7 +146,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Modified view is created successfully.
     func testCanBeAppliedToComplexView() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -172,7 +172,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     func testCallbackIsCaptured() {
         nonisolated(unsafe) var capturedValue = 0
 
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             capturedValue = 42
         }
 
@@ -190,11 +190,11 @@ final class ScenePhaseObserverTests: XCTestCase {
         nonisolated(unsafe) var callback1Executed = false
         nonisolated(unsafe) var callback2Executed = false
 
-        let observer1 = ScenePhaseObserver { @Sendable in
+        let observer1 = ScenePhaseObserver {
             callback1Executed = true
         }
 
-        let observer2 = ScenePhaseObserver { @Sendable in
+        let observer2 = ScenePhaseObserver {
             callback2Executed = true
         }
 
@@ -212,7 +212,7 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Modifier chain is created successfully.
     func testCanBeChainedWithOtherModifiers() {
-        let observer = ScenePhaseObserver { @Sendable in
+        let observer = ScenePhaseObserver {
             // Empty callback
         }
 
@@ -230,11 +230,11 @@ final class ScenePhaseObserverTests: XCTestCase {
     ///
     /// Expected: Both modifiers are applied successfully.
     func testMultipleScenePhaseObserversCanBeApplied() {
-        let observer1 = ScenePhaseObserver { @Sendable in
+        let observer1 = ScenePhaseObserver {
             // First callback
         }
 
-        let observer2 = ScenePhaseObserver { @Sendable in
+        let observer2 = ScenePhaseObserver {
             // Second callback
         }
 
